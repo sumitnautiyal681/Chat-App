@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "@/context/SocketContext";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 interface User {
   _id: string;
@@ -141,7 +142,7 @@ export default function Chats({ setSelectedChat, newGroup, onGroupUpdated }: Cha
               className="flex items-center gap-2 p-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100"
             >
               <div className="relative">
-                <img src={item.profilePic} alt={item.name} className="w-10 h-10 rounded-full object-cover" />
+                <Image src={item.profilePic} alt={item.name} className="w-10 h-10 rounded-full object-cover" />
                 {item.type === "friend" && (
                   <span
                     className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white ${

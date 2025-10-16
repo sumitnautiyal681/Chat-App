@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { Camera } from "lucide-react";
+import Image from "next/image";
 
 interface User {
   _id: string;
@@ -143,7 +144,7 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
       {/* Group Image */}
       <div className="flex justify-center mb-5 relative">
         <div className="relative">
-          <img
+          <Image
             src={previewUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
             alt="Group"
             className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
@@ -202,7 +203,7 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
                 }`}
                 onClick={() => toggleSelectUser(u._id)}
               >
-                <img
+                <Image
                   src={u.profilePic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
                   alt={u.name}
                   className="w-9 h-9 rounded-full object-cover mr-2"

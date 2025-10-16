@@ -1,6 +1,7 @@
 "use client";
 
 import { Group } from "./RightPanel";
+import Image from "next/image";
 
 interface Props {
   selectedChat: Group;
@@ -21,7 +22,7 @@ export default function GroupInfoModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-lg p-5 w-[90%] max-w-md shadow-lg text-center"
       >
-        <img
+        <Image
           src={selectedChat.profilePic || "/847969.png"}
           alt="group"
           className="w-24 h-24 rounded-full object-cover mx-auto mb-3"
@@ -34,7 +35,7 @@ export default function GroupInfoModal({
         <div className="space-y-2 text-left max-h-[200px] overflow-y-auto mb-3">
           {selectedChat.members.map((m) => (
             <div key={m._id} className="flex items-center gap-2 border-b pb-1">
-              <img
+              <Image
                 src={m.profilePic || "/847969.png"}
                 alt={m.name}
                 className="w-8 h-8 rounded-full object-cover"
