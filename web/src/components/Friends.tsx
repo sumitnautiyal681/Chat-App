@@ -72,7 +72,7 @@ export default function Friends() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${user.token}`,
+                    Authorization: `Bearer ${user?.token}`,
                 },
                 body: JSON.stringify({ toUserId }),
             });
@@ -109,13 +109,13 @@ export default function Friends() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${user.token}`,
+                    Authorization: `Bearer ${user?.token}`,
                 },
                 body: JSON.stringify({ fromUserId }),
             });
             const data = await res.json();
             if (res.ok) {
-                updateUser({ ...data.user, token: user.token });
+                updateUser({ ...data.user, token: user?.token });
                 setFriendRequests(prev => prev.filter(f => f._id !== fromUserId));
                 localStorage.setItem("friendReqUpdate", Date.now().toString());
                 setUsers(prev => prev.map(u => (u._id === fromUserId ? { ...u, isNowFriend: true } : u)));

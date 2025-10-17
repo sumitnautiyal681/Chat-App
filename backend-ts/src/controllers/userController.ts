@@ -3,8 +3,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
-import User, { IUser } from '../models/User.js'; // Assuming IUser is exported from your User model
-import cloudinary from '../config/cloudinary.js';
+import User, { IUser } from '../models/User'; // Assuming IUser is exported from your User model
+import cloudinary from '../config/cloudinary';
 
 // Define a custom request type for authenticated routes
 interface AuthRequest extends Request {

@@ -2,61 +2,55 @@
 
 import { useState, useEffect } from "react";
 import { useSocket } from "@/context/SocketContext";
-import { useAuth, User } from "@/context/AuthContext";
-import LeftPanel from "@/components/LeftPanel";
-import MiddlePanel from "@/components/MiddlePanel";
-import RightPanel from "@/components/RightPanel";
+import { useAuth } from "@/context/AuthContext";
+import LeftPanel from "../../components/LeftPanel";
+import MiddlePanel from "../../components/MiddlePanel";
+import RightPanel from "../../components/RightPanel";
+import { Chat,Group } from "../../types/chat";
+import './dashboard.css';
 
-interface Message {
-  _id: string;
-  sender: string;
-  content: string;
-  type?: string;
-  fileUrl?: string;
-  senderName?: string;
-  createdAt: string;
-}
+type Section = "chats" | "groups" | "friends" | "profile";
 
-export default function DashboardPage() {
-  const [selectedSection, setSelectedSection] = useState<"chats" | "friends" | "groups" | "profile">("chats");
-  const [selectedChat, setSelectedChat] = useState<any | null>(null);
-  const [newGroup, setNewGroup] = useState<Message[] | null>(null);
+export default function Dashboard() {
+  const [selectedSection, setSelectedSection] = useState<Section>("chats");
+
+  const [selectedChat, setSelectedChat] = useState<Chat | Group | null>(null);
+  const [newGroup, setNewGroup] = useState<Group | null>(null);
+
   const { socket } = useSocket();
   const { user } = useAuth();
 
   useEffect(() => {
-    if (socket && user?._id) {
+    if (socket && user && user._id) {
       socket.emit("join_user_room", user._id);
     }
   }, [socket, user]);
 
+  const handleGroupUpdated = (updatedGroup: Group) => {
+    setSelectedChat((prev) =>
+      prev && prev._id === updatedGroup._id ? { ...updatedGroup, isGroupChat: true } : prev
+    );
+  };
+
   return (
-    <div className="flex h-[95vh] w-[95%] max-w-[1400px] bg-white rounded-xl overflow-hidden shadow-lg mx-auto">
-      {/* Left Sidebar */}
+    <div className="dashboard-container">
+      {/* Sidebar */}
       <LeftPanel setSelectedSection={setSelectedSection} />
 
-      {/* Middle Section */}
+      {/* Middle section */}
       <MiddlePanel
         selectedSection={selectedSection}
         setSelectedChat={setSelectedChat}
         newGroup={newGroup}
         setNewGroup={setNewGroup}
-        onGroupUpdated={(updatedGroup: any) =>
-          setSelectedChat((prev) =>
-            prev && prev._id === updatedGroup._id ? { ...updatedGroup, isGroupChat: true } : prev
-          )
-        }
+        onGroupUpdated={handleGroupUpdated}
       />
 
-      {/* Right Panel */}
+      {/* Right chat window */}
       <RightPanel
         selectedChat={selectedChat}
         setSelectedChat={setSelectedChat}
-        onGroupUpdated={(updatedGroup: any) =>
-          setSelectedChat((prev) =>
-            prev && prev._id === updatedGroup._id ? { ...updatedGroup, isGroupChat: true } : prev
-          )
-        }
+        onGroupUpdated={handleGroupUpdated}
       />
     </div>
   );

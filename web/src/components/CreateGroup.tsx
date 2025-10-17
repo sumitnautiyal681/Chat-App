@@ -2,18 +2,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Camera } from "lucide-react";
 import Image from "next/image";
-
+import {Group } from "../types/chat";
 interface User {
   _id: string;
   name: string;
-  profilePic?: string;
-}
-
-interface Group {
-  _id: string;
-  name: string;
-  members: string[];
-  admin: string;
   profilePic?: string;
 }
 
@@ -101,12 +93,12 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({
           name: groupName,
           members: selectedUsers,
-          admin: user._id,
+          admin: user?._id,
           profilePic: imageUrl,
         }),
       });
@@ -123,9 +115,9 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
       setPreviewUrl(null);
 
       onGroupCreated(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert("Error creating group: " + err.message);
+      alert("Error creating group: ");
     } finally {
       setCreating(false);
     }

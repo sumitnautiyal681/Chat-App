@@ -6,8 +6,16 @@ interface LeftPanelProps {
   setSelectedSection: (section: "chats" | "friends" | "groups" | "profile") => void;
 }
 
+// ✅ Define button type
+interface ButtonType {
+  icon:  React.ReactNode;
+  title: string;
+  section: "chats" | "friends" | "groups" | "profile";
+}
+
 export default function LeftPanel({ setSelectedSection }: LeftPanelProps) {
-  const buttons = [
+  // ✅ Explicitly type the buttons array
+  const buttons: ButtonType[] = [
     { icon: <FaComments size={22} />, title: "Chats", section: "chats" },
     { icon: <FaUserPlus size={22} />, title: "Friends", section: "friends" },
     { icon: <FaUsers size={22} />, title: "Create Group", section: "groups" },
@@ -20,7 +28,7 @@ export default function LeftPanel({ setSelectedSection }: LeftPanelProps) {
         <button
           key={btn.section}
           className="w-12 h-12 rounded-lg bg-blue-100 text-gray-600 flex items-center justify-center transition-all hover:bg-blue-500 hover:text-white"
-          onClick={() => setSelectedSection(btn.section as any)}
+          onClick={() => setSelectedSection(btn.section)}
           title={btn.title}
         >
           {btn.icon}
