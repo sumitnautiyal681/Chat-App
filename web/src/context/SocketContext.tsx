@@ -26,7 +26,7 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     if (!user || !user._id) return;
 
     // Initialize socket connection
-    const newSocket: Socket = io("http://localhost:5000", {
+    const newSocket: Socket = io(`${process.env.NEXT_PUBLIC_API_URL}`, {
       transports: ["websocket"],
       query: { userId: user._id },
     });

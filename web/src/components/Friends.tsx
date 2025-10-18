@@ -31,7 +31,7 @@ export default function Friends() {
         if (!user) return;
         const fetchUsers = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/users/all", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/all`, {
                     headers: { Authorization: `Bearer ${user.token}` },
                 });
                 const data = await res.json();
@@ -51,7 +51,7 @@ export default function Friends() {
         if (!user) return;
         const fetchFriendRequests = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/users/friend-requests", {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/friend-requests`, {
                     headers: { Authorization: `Bearer ${user.token}` },
                 });
                 const data = await res.json();
@@ -68,7 +68,7 @@ export default function Friends() {
     const sendFriendRequest = async (toUserId: string) => {
         setSendingRequest(toUserId);
         try {
-            const res = await fetch("http://localhost:5000/api/users/friend-request", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/friend-request`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -105,7 +105,7 @@ export default function Friends() {
     // Accept friend request
     const acceptFriendRequest = async (fromUserId: string) => {
         try {
-            const res = await fetch("http://localhost:5000/api/users/accept-request", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/accept-request`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

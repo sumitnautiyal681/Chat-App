@@ -31,7 +31,7 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
     if (!user) return;
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/users/all", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/all`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const data: User[] = await res.json();
@@ -74,7 +74,7 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
       formData.append("file", groupImage);
 
       try {
-        const res = await fetch("http://localhost:5000/api/upload", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
           method: "POST",
           body: formData,
         });
@@ -90,7 +90,7 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/groups", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

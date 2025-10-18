@@ -94,7 +94,7 @@ export default function RightPanel(
     if (!user?.token || !selectedChat?._id) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${selectedChat._id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups/${selectedChat._id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
@@ -123,7 +123,7 @@ export default function RightPanel(
     const fetchMessages = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/messages/${selectedChat._id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/messages/${selectedChat._id}`,
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
         setMessages(await res.json());
@@ -188,7 +188,7 @@ export default function RightPanel(
     try {
       setLoadingFriends(true);
 
-      const res = await fetch("http://localhost:5000/api/users/friends", {
+      const res = await fetch( `${process.env.NEXT_PUBLIC_API_URL}/api/users/friends`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
@@ -220,7 +220,7 @@ export default function RightPanel(
       setSendingFile(selectedFile.name);
       const fd = new FormData();
       fd.append("file", selectedFile);
-      const res = await fetch("http://localhost:5000/api/upload", { method: "POST", body: fd });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, { method: "POST", body: fd });
       const data = await res.json();
       fileUrl = data.fileUrl;
     }
@@ -235,7 +235,7 @@ export default function RightPanel(
       fileUrl,
     };
 
-    const res = await fetch("http://localhost:5000/api/messages", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
       body: JSON.stringify(msgData),
@@ -267,7 +267,7 @@ export default function RightPanel(
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://localhost:5000/api/upload", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -323,7 +323,7 @@ export default function RightPanel(
     setSavingGroup(true);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${selectedChat?._id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups/${selectedChat?._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -715,7 +715,7 @@ export default function RightPanel(
 
                                       // Backend request
                                       const res = await fetch(
-                                        `http://localhost:5000/api/groups/${selectedChat._id}/toggle-admin`,
+                                        `${process.env.NEXT_PUBLIC_API_URL}api/groups/${selectedChat._id}/toggle-admin`,
                                         {
                                           method: "PATCH",
                                           headers: {
@@ -772,7 +772,7 @@ export default function RightPanel(
 
 
                                     const res = await fetch(
-                                      `http://localhost:5000/api/groups/${selectedChat._id}/remove-member`,
+                                      `${process.env.NEXT_PUBLIC_API_URL}/api/groups/${selectedChat._id}/remove-member`,
                                       {
                                         method: "PATCH",
                                         headers: {
@@ -832,7 +832,7 @@ export default function RightPanel(
                 onClick={async () => {
                   if (!window.confirm("Are you sure you want to leave this group?")) return;
                   try {
-                    const res = await fetch(`http://localhost:5000/api/groups/${selectedChat._id}/leave`, {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups/${selectedChat._id}/leave`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
                     });
@@ -954,7 +954,7 @@ export default function RightPanel(
 
                             // 🔹 Backend request
                             const res = await fetch(
-                              `http://localhost:5000/api/groups/${selectedChat._id}/add-members`,
+                              `${process.env.NEXT_PUBLIC_API_URL}/api/groups/${selectedChat._id}/add-members`,
                               {
                                 method: "PATCH",
                                 headers: {

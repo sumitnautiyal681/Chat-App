@@ -80,10 +80,10 @@ export default function Chats({
     const fetchData = async () => {
       try {
         const [friendsRes, groupsRes] = await Promise.all([
-          fetch("http://localhost:5000/api/users/friends", {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/friends`, {
             headers: { Authorization: `Bearer ${user.token}` },
           }),
-          fetch("http://localhost:5000/api/groups/user-groups", {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups/user-groups`, {
             headers: { Authorization: `Bearer ${user.token}` },
           }),
         ]);
@@ -113,7 +113,7 @@ export default function Chats({
         friends.map(async (friend) => {
           if (friend.chatId) return friend;
 
-          const res = await fetch("http://localhost:5000/api/chats/one-to-one", {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/one-to-one`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -147,7 +147,7 @@ export default function Chats({
 
         await Promise.all(
           chatIds.map(async (id) => {
-            const res = await fetch(`http://localhost:5000/api/messages/${id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/${id}`, {
               headers: { Authorization: `Bearer ${user?.token}` },
             });
 
@@ -239,7 +239,7 @@ export default function Chats({
         }));
 
         // 🔸 Fetch minimal chat metadata to know if it's group or one-to-one
-        const res = await fetch(`http://localhost:5000/api/chats/${chatId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats/${chatId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
 
@@ -346,7 +346,7 @@ export default function Chats({
       setSelectedChat({ ...item, isGroupChat: true });
     } else {
       try {
-        const res = await fetch("http://localhost:5000/api/chats/one-to-one", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats/one-to-one`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
