@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import './login.css';
 
 export default function LoginPage() {
   const { user, login, logout } = useAuth();
@@ -25,7 +26,7 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-
+    console.log("🔐 Sending login data:", { email, password });
     try {
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
@@ -63,14 +64,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-  <div className="bg-white p-10 rounded-xl shadow-md w-full max-w-md font-sans">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Login</h2>
-        {user ? (
-          <div className="text-center">
-            <p className="text-center mb-5 text-lg text-gray-800">Welcome, {user.name}</p>
+   <div className="login-container">
+        <h2>Login</h2>
+        {user ? ( 
+          <>
+            <p className="welcome-message">Welcome, {user.name}</p>
             <button
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
               onClick={() => {
                 logout();
                 localStorage.removeItem("authToken");
@@ -78,38 +77,38 @@ export default function LoginPage() {
             >
               Logout
             </button>
-          </div>
+            </> 
         ) : (
           <>
-            <div className="mb-5 flex flex-col">
-              <label className="mb-1 font-semibold text-gray-600">Email</label>
+            <div  className="input-group">
+              <label >Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:border-blue-500 focus:shadow-md" /> 
+               />
             </div>
 
-            <div className="mb-4">
-              <label className="block mb-1">Password</label>
+             <div className="input-group">
+              <label>Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                className="w-full px-3 py-2 border rounded"
+                
               />
             </div>
 
             <button
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-blue-500 text-white py-3 font-semibold rounded-md hover:bg-blue-600">
+             >
               {loading ? "Logging in..." : "Login"}
             </button>
 
-            <p className="mt-4 text-center">
+            <p  style={{ marginTop: 15, textAlign: "center" }}>
               Don&apos;t have an account?{" "}
               <Link href="/register" className="text-blue-500 hover:underline">
                 Register
@@ -117,7 +116,6 @@ export default function LoginPage() {
             </p>
           </>
         )}
-      </div>
     </div>
   );
 }

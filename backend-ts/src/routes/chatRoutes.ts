@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import Chat from "../models/Chat";
-import { getUserChats } from "../controllers/chatController";
+import { getUserChats,getChatById } from "../controllers/chatController";
 import { protect } from "../middleware/authMiddleware";
 
 const router: Router = express.Router();
@@ -32,5 +32,8 @@ router.post("/one-to-one", async (req: Request, res: Response) => {
 });
 
 router.get("/", protect, getUserChats);
+
+// ✅ Fetch a single chat by ID
+router.get("/:chatId", protect, getChatById);
 
 export default router;

@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import User, { IUser } from '../models/User'; // Assuming IUser is exported from your User model
 import cloudinary from '../config/cloudinary';
+import bcrypt from 'bcryptjs';
 
 // Define a custom request type for authenticated routes
 interface AuthRequest extends Request {
@@ -44,11 +45,14 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       });
       uploadedPicUrl = uploadResponse.secure_url;
     }
-    
+
+    // ✅ Hash password before creating user
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
       name,
       email,
-      password,
+      password: hashedPassword,
       profilePic: uploadedPicUrl || 'https://cdn-icons-png.flaticon.com/512/847/847969.png',
     });
 
@@ -75,8 +79,9 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
   try {
     const user = await User.findOne({ email })
-      .populate('friends', '_id name email profilePic')
-      .populate('friendRequests', '_id name email profilePic');
+      .select("+password") // ✅ Important
+      .populate("friends", "_id name email profilePic")
+      .populate("friendRequests", "_id name email profilePic");
 
     if (user && (await user.matchPassword(password))) {
       res.json({
@@ -89,12 +94,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         token: generateToken(user._id as unknown as Types.ObjectId),
       });
     } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+      res.status(401).json({ message: "Invalid email or password" });
     }
   } catch (error) {
-    res.status(500).json({ message: error instanceof Error ? error.message : 'An unknown error occurred' });
+    res.status(500).json({ message: error instanceof Error ? error.message : "An unknown error occurred" });
   }
 };
+
 
 // @desc    Get all users except the logged-in user
 // @route   GET /api/users/all

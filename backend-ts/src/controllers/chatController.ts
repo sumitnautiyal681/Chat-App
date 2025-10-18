@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Chat from "../models/Chat";
 import User, { IUser } from "../models/User";
+import mongoose from "mongoose";
 
 interface AuthRequest extends Request {
   user?: IUser;
@@ -56,5 +57,33 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch chats" });
+  }
+};
+
+export const getChatById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { chatId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      return res.status(400).json({ message: "Invalid chat ID format" });
+    }
+
+    const chat = await Chat.findById(chatId)
+      .populate("users", "name email profilePic")
+      .populate({
+        path: "latestMessage",
+        select: "content createdAt sender",
+        populate: { path: "sender", select: "name profilePic" },
+      });
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    res.json(chat);
+  } catch (error) {
+    console.error("Error fetching chat:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

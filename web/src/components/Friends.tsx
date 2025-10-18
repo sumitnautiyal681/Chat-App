@@ -146,54 +146,147 @@ export default function Friends() {
     };
 
     return (
-        <div className="p-2">
+        <div >
             {/* Header */}
-            <div className="flex justify-between items-center relative">
-                <h3 className="text-2xl font-semibold m-5">Find Friends</h3>
-                <div className="relative">
-                    <FaBell
-                        size={22}
-                        onClick={() => setShowDropdown(!showDropdown)}
-                        className="text-gray-800 mr-5 cursor-pointer"
-                    />
-                    {friendRequests.length > 0 && (
-                        <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5">{friendRequests.length}</span>
-                    )}
-                    {showDropdown && (
-                        <div ref={dropdownRef} className="absolute top-7 right-0 w-60 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded shadow-md z-10">
-                            {friendRequests.length === 0 ? (
-                                <p className="text-center p-2 text-gray-600">No new requests</p>
-                            ) : (
-                                friendRequests.map(req => (
-                                    <div key={req._id} className="flex justify-between items-center p-2 border-b border-gray-100">
-                                        <div className="flex items-center gap-2">
+            <div
+                style={{
+    display: "flex",
+    alignItems: "center", 
+    justifyContent: "space-between",
+    position: "sticky",      // stays on top while scrolling
+    top: "10px",             // space from top
+    padding: "12px 20px",    // more padding like other headers
+    background: "#fff",      // white background
+    borderRadius: "12px",    // rounded corners
+    boxShadow: "0 0 10px rgba(0,0,0,0.1)", // subtle shadow
+    zIndex: 10,
+    marginBottom: "15px",    // spacing below header
+  }}
+            >
+                {/* Header Title */}
+                <h3 style={{ fontSize: "25px", margin: 0 }}>Find Friends</h3>
 
-                                            <Image
-                                                src={req.profilePic || "/placeholder.png"} // better to have local fallback
-                                                alt={req.name}
-                                                width={30}
-                                                height={30}
-                                                style={{
-                                                    borderRadius: "50%",
-                                                    objectFit: "cover",
-                                                }}
-                                            />
+                {/* Icons: Bell + Hamburger */}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {/* Bell Icon with dropdown */}
+                    <div style={{ position: "relative", cursor: "pointer" }}>
+                        <FaBell
+                            size={22}
+                            onClick={() => setShowDropdown(!showDropdown)}
+                            style={{ color: "#333" }}
+                        />
+                        {friendRequests.length > 0 && (
+                            <span
+                                style={{
+                                    position: "absolute",
+                                    top: "-5px",
+                                    right: "-5px",
+                                    background: "red",
+                                    color: "white",
+                                    borderRadius: "50%",
+                                    padding: "2px 6px",
+                                    fontSize: "12px",
+                                }}
+                            >
+                                {friendRequests.length}
+                            </span>
+                        )}
 
-                                            <span className="text-sm">{req.name}</span>
-                                        </div>
-                                        <button
-                                            onClick={() => acceptFriendRequest(req._id)}
-                                            className="bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600"
+                        {showDropdown && (
+                            <div
+                                ref={dropdownRef}
+                                style={{
+                                    position: "absolute",
+                                    top: "28px",
+                                    right: "0",
+                                    background: "white",
+                                    border: "1px solid #ddd",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                    width: "240px",
+                                    zIndex: 10,
+                                    maxHeight: "300px",
+                                    overflowY: "auto",
+                                }}
+                            >
+                                {friendRequests.length === 0 ? (
+                                    <p
+                                        style={{
+                                            textAlign: "center",
+                                            padding: "10px",
+                                            color: "#666",
+                                        }}
+                                    >
+                                        No new requests
+                                    </p>
+                                ) : (
+                                    friendRequests.map((req) => (
+                                        <div
+                                            key={req._id}
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                padding: "8px 10px",
+                                                borderBottom: "1px solid #eee",
+                                            }}
                                         >
-                                            Accept
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    )}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                <Image
+                                                    src={req.profilePic || "/placeholder.png"}
+                                                    alt={req.name}
+                                                    width={30}
+                                                    height={30}
+                                                    style={{
+                                                        width: "30px",
+                                                        height: "30px",
+                                                        borderRadius: "50%",
+                                                        objectFit: "cover",
+                                                    }}
+                                                />
+                                                <span style={{ fontSize: "0.9rem" }}>{req.name}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => acceptFriendRequest(req._id)}
+                                                style={{
+                                                    background: "#0b93f6",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: "4px",
+                                                    padding: "4px 8px",
+                                                    fontSize: "0.5rem",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                Accept
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Hamburger Icon (mobile only) */}
+                    <button
+                        className="hamburger-btn"
+                        style={{
+                            border: "none",
+                            background: "none",
+                            cursor: "pointer",
+                            fontSize: "24px",
+                            display: "none", // will show on mobile via CSS
+                            color:"black",
+                        }}
+                        onClick={() => {
+                            document.querySelector(".left-panel")?.classList.toggle("show");
+                        }}
+                    >
+                        ☰
+                    </button>
                 </div>
             </div>
+
 
             {/* Search */}
             <input
@@ -201,39 +294,66 @@ export default function Friends() {
                 placeholder="Search users..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-11/12 mx-2 p-2 border border-gray-300 rounded outline-none text-sm"
+                style={{
+                    width: "90%",
+                    padding: "8px 12px",
+                    marginLeft: "10px",
+                    marginRight: "10px",
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    outline: "none",
+                    fontSize: "14px",
+                }}
             />
 
             {/* Users List */}
-            <ul className="p-2">
+            <ul style={{ listStyle: "none", padding: 0 }}>
                 {filteredUsers.length === 0 ? (
                     <p>No users found.</p>
                 ) : (
                     filteredUsers.map(u => {
                         const isFriend = user?.friends?.includes(u._id) || u.isNowFriend;
                         return (
-                            <li key={u._id} className="flex justify-between items-center p-2 mb-2 bg-gray-50 rounded hover:bg-gray-100 transition">
-                                <div className="flex items-center gap-2">
+                            <li key={u._id} style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 10px",
+                                borderRadius: "6px",
+                                background: "#fafafa",
+                                marginBottom: "8px",
+                                transition: "background 0.2s",
+
+                            }} onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f0f0")}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = "#fafafa")}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                     <Image
                                         src={u.profilePic || "/placeholder.png"}
                                         alt={u.name}
                                         width={40}
                                         height={40}
                                         style={{
+                                            width: "40px",
+                                            height: "40px",
                                             borderRadius: "50%",
                                             objectFit: "cover",
                                         }}
                                     />
 
-                                    <span className="font-medium">{u.name}</span>
+                                    <span style={{ fontWeight: "500" }}>{u.name}</span>
                                 </div>
                                 {isFriend ? (
-                                    <span className="text-green-600 font-bold">Friends</span>
+                                    <span style={{ fontWeight: "bold", color: "green" }}>Friends</span>
                                 ) : (
                                     <FaUserPlus
                                         onClick={() => sendFriendRequest(u._id)}
                                         size={20}
-                                        className={`mr-2 cursor-pointer ${sendingRequest === u._id ? "opacity-50 cursor-not-allowed" : ""}`}
+                                        style={{
+                                            color: "#0b93f6",
+                                            cursor: sendingRequest === u._id ? "not-allowed" : "pointer",
+                                            opacity: sendingRequest === u._id ? 0.5 : 1,
+                                            marginRight: "10px",
+                                        }}
                                         title={sendingRequest === u._id ? "Sending..." : "Add Friend"}
                                     />
                                 )}

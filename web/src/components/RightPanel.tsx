@@ -12,7 +12,8 @@ import { Socket } from "socket.io-client";
 import { Paperclip } from "lucide-react";
 import Image from "next/image";
 import { FiUserPlus } from "react-icons/fi";
-import { Chat, Group } from "../types/chat"
+import { Chat, Group } from "../types/chat";
+import { IoArrowBack } from "react-icons/io5";
 
 // --- Interfaces ---
 export interface User {
@@ -81,7 +82,7 @@ export default function RightPanel(
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [savingGroup, setSavingGroup] = useState(false);
-
+  const [hover, setHover] = useState(false);
 
 
   // --- Auto scroll ---
@@ -90,7 +91,7 @@ export default function RightPanel(
   }, [messages]);
 
   const fetchGroupDetails = useCallback(async (): Promise<void> => {
-    if (!user?.token || !selectedChat) return;
+    if (!user?.token || !selectedChat?._id) return;
 
     try {
       const res = await fetch(`http://localhost:5000/api/groups/${selectedChat._id}`, {
@@ -103,14 +104,16 @@ export default function RightPanel(
       console.log("Fetched full group info ✅", data);
 
       setGroupInfo(data);
-
       setSelectedChat((prev) =>
         prev && prev._id === data._id ? { ...data, isGroupChat: true } : prev
       );
     } catch (err) {
       console.error("Error fetching group details:", err);
     }
-  }, [selectedChat, user?.token, setSelectedChat]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChat?._id, user?.token]); // ✅ This is correct
+
+
 
 
   // --- Fetch chat messages ---
@@ -217,10 +220,7 @@ export default function RightPanel(
       setSendingFile(selectedFile.name);
       const fd = new FormData();
       fd.append("file", selectedFile);
-      const res = await fetch("http://localhost:5000/api/upload", {
-        method: "POST",
-        body: fd,
-      });
+      const res = await fetch("http://localhost:5000/api/upload", { method: "POST", body: fd });
       const data = await res.json();
       fileUrl = data.fileUrl;
     }
@@ -237,20 +237,20 @@ export default function RightPanel(
 
     const res = await fetch("http://localhost:5000/api/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
       body: JSON.stringify(msgData),
     });
 
     const saved = await res.json();
+
+    // Only emit to socket; the socket listener should handle adding it locally
     socket?.emit("send_message", saved);
-    setMessages((prev) => [...prev, saved]);
+
     setNewMessage("");
     setSelectedFile(null);
     setSendingFile(null);
   };
+
 
   useEffect(() => {
     if (showGroupInfo && selectedChat?.isGroupChat) {
@@ -358,16 +358,16 @@ export default function RightPanel(
   // --- UI ---
   if (!user)
     return (
-      <div className="p-4 text-center text-gray-600">
-        Please log in to view or send messages.
+      <div className="right-panel" style={{ padding: 20 }}>
+        <p>Please log in to view or send messages.</p>
       </div>
     );
 
   if (!selectedChat)
     return (
-      <div className="p-4 text-center text-gray-600">
-        <p className="text-lg font-semibold">Hey {user.name} 👋</p>
-        <p className="mt-2">Start chatting with your friends!</p>
+      <div className="right-panel" style={{ padding: 20, alignItems: "center", fontSize: "40px" }}>
+        <p><b>Hey {user.name} </b></p>
+        <p style={{ paddingTop: "400px", alignItems: "center", fontSize: "20px", display: "flex" }}>Start Chatting with your friends!</p>
       </div>
     );
 
@@ -379,38 +379,69 @@ export default function RightPanel(
 
   const isAdmin = selectedChat.admins?.some(a => a._id === user._id);
   const isCreator = selectedChat?.admin?._id === user._id;
+
+
   return (
-    <div className="flex flex-col h-full p-2.5 bg-gray-100 rounded-xl">
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      padding: "10px",
+      background: "#f5f5f5",
+      borderRadius: "10px",
+    }} >
       {/* 🔹 Chat Header Bar */}
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 15px",
-          background: "#ffffff",
-          borderBottom: "1px solid #ddd",
-          borderRadius: "10px 10px 0 0",
-        }}
+      style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start", // <-- put everything together
+    padding: "10px 15px",
+    background: "#ffffff",
+    borderBottom: "1px solid #ddd",
+    borderRadius: "10px 10px 0 0",
+    gap: "0px", // <-- space between arrow and profile
+  }}
       >
+        {/* 🔙 Back Button (Mobile Only) */}
+        <button
+          onClick={() => {
+            setSelectedChat(null); // return to middle panel
+            // also reset CSS variables for sliding
+            document.documentElement.style.setProperty('--middle-translate', '0');
+            document.documentElement.style.setProperty('--right-translate', '100%');
+          }}
+          className="mobile-back-btn"
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            marginRight: "10px",
+            display: "flex", // show only on mobile via CSS
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <IoArrowBack size={22} color="#0b93f6" />
+        </button>
         {/* Left Section: Profile Image + Name */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px"}}>
           <Image
             key={selectedChat?.profilePic}
             src={
               selectedChat?.isGroupChat
-                ? selectedChat.profilePic || "847969.png"
-                : chatUser?.profilePic || "847969.png"
+                ? selectedChat.profilePic || "/847969.png"
+                : chatUser?.profilePic || "/847969.png"
             }
             alt="profile"
+            width={40}          // ✅ Required prop
+            height={40}         // ✅ Required prop
             style={{
-              width: "40px",
-              height: "40px",
               borderRadius: "50%",
               objectFit: "cover",
             }}
             onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-              e.currentTarget.src = "847969.png";
+              e.currentTarget.src = "/847969.png";
             }}
           />
 
@@ -427,7 +458,7 @@ export default function RightPanel(
         </div>
 
         {/* Right Section: 3-dot menu */}
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative",marginLeft:"80px"}}>
           <button
             onClick={() => setShowMenu((prev) => !prev)}
             style={{
@@ -464,7 +495,11 @@ export default function RightPanel(
                     setShowProfile(true);
                   }
                 }}
-                className="px-3 py-2 cursor-pointer border-b last:border-b-0"
+                style={{
+                  padding: "10px",
+                  cursor: "pointer",
+                  borderBottom: "1px solid #eee",
+                }}
               >
                 {selectedChat?.isGroupChat ? "View Group Info" : "View Profile"}
               </div>
@@ -518,18 +553,19 @@ export default function RightPanel(
               {/* Profile Picture & Editable Name */}
               <div style={{ textAlign: "center", marginBottom: "20px" }}>
                 <Image
-                  src={selectedChat?.profilePic || "847969.png"}
+                  src={selectedChat?.profilePic || "/847969.png"}
                   alt={selectedChat?.name}
+                  width={100}
+                  height={100}
                   style={{
-                    width: "100px",
-                    height: "100px",
+
                     borderRadius: "50%",
                     objectFit: "cover",
                     margin: "0 auto 10px",
                     display: "block",
                   }}
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                    e.currentTarget.src = "847969.png";
+                    e.currentTarget.src = "/847969.png";
                   }}
                 />
 
@@ -567,10 +603,10 @@ export default function RightPanel(
               {/* Members List */}
               <div style={{ textAlign: "left" }}>
                 {(groupInfo?.members || selectedChat?.members || []).map((member) => {
-                  const isAdminMember = selectedChat?.admins?.some(
+                  const isAdmin = selectedChat?.admins?.some(
                     (a) => a._id === member._id
                   );
-                  const isCreatorMember = selectedChat?.admin?._id === member._id;
+                  const isCreator = selectedChat?.admin?._id === member._id;
                   const currentUserIsCreator = selectedChat?.admin?._id === user?._id;
 
 
@@ -592,16 +628,18 @@ export default function RightPanel(
                             member.profilePic
                               ? `${member.profilePic}?t=${member.updatedAt || Date.now()
                               }`
-                              : "847969.png"
+                              : "/847969.png"
                           }
                           alt={member.name}
-                          style={{ width: 35, height: 35, borderRadius: "50%" }}
+                          width={35}
+                          height={35}
+                          style={{ borderRadius: "50%" }}
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                            e.currentTarget.src = "847969.png";
+                            e.currentTarget.src = "/847969.png";
                           }}
                         />
                         <span style={{ fontWeight: 500 }}>{member.name}</span>
-                        {isAdminMember && (
+                        {isAdmin && (
                           <span
                             style={{
                               background: "#0b93f6",
@@ -615,7 +653,7 @@ export default function RightPanel(
                             Admin
                           </span>
                         )}
-                        {isCreatorMember && (
+                        {isCreator && (
                           <span
                             style={{
                               background: "#28a745",
@@ -631,66 +669,84 @@ export default function RightPanel(
                         )}
                       </div>
                       {/* Member Actions Dropdown */}
-                      <div className="relative">
+                      <div style={{ position: "relative" }}>
                         <button
                           onClick={() =>
                             setOpenDropdown((prev) => (prev === member._id ? null : member._id))
                           }
-                          className="p-1 border-none bg-transparent cursor-pointer text-black text-lg"
+                          style={{ padding: "4px", border: "none", background: "transparent", cursor: "pointer", fontSize: "18px", color: "black" }}
                         >
                           ⋯
                         </button>
 
                         {openDropdown === member._id && (
-                          <div className="absolute right-0 top-6 bg-white border border-gray-200 rounded-md shadow-md z-20 min-w-[140px]">
+                          <div style={{ position: "absolute", right: 0, top: "25px", background: "#fff", border: "1px solid #ddd", borderRadius: "6px", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", zIndex: 20, minWidth: "140px" }}>
                             {/* View Profile */}
                             <div
                               onClick={() => {
                                 setSelectedMemberProfile(member);
                                 setOpenDropdown(null);
                               }}
-                              className="px-3 py-2 cursor-pointer border-b border-gray-100 hover:bg-gray-100"
+                              style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid #eee" }}
                             >
                               View Profile
                             </div>
 
-                            {/* Assign/Remove Admin */}
-                            {currentUserIsCreator && member._id !== user._id && !isCreator && (
-                              <div
-                                onClick={async () => {
-                                  try {
-                                    setSelectedChat((prev) => ({
-                                      ...prev!,
-                                      admins: isAdmin
-                                        ? prev!.admins?.filter((a) => a._id !== member._id)
-                                        : [...(prev!.admins || []), member],
-                                    }));
+                            {/* Assign / Remove Admin */}
+                            {member &&
+                              currentUserIsCreator &&
+                              member._id !== user._id &&
+                              !isCreator && (   // ✅ Correct variable name
+                                <div
+                                  onClick={async () => {
+                                    if (!selectedChat || !member) return console.error("No selected chat or member to update.");
 
-                                    const res = await fetch(
-                                      `http://localhost:5000/api/groups/${selectedChat._id}/toggle-admin`,
-                                      {
-                                        method: "PATCH",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                          Authorization: `Bearer ${user.token}`,
-                                        },
-                                        body: JSON.stringify({ memberId: member._id }),
-                                      }
-                                    );
-                                    const updatedGroup = await res.json();
-                                    setSelectedChat({ ...updatedGroup, isGroupChat: true });
-                                    onGroupUpdated?.(updatedGroup);
-                                  } catch (err) {
-                                    console.error(err);
-                                  } finally {
-                                    setOpenDropdown(null);
-                                  }
-                                }}
-                                className="px-3 py-2 cursor-pointer border-b border-gray-100 hover:bg-gray-100"
-                              >
-                                {isAdmin ? "Remove Admin" : "Assign Admin"}
-                              </div>
-                            )}
+                                    try {
+                                      // Optimistic local update
+                                      setSelectedChat((prevGroup) => {
+                                        if (!prevGroup) return null;
+
+                                        const updatedAdmins = isAdmin
+                                          ? (prevGroup.admins || []).filter((admin) => admin._id !== member._id)
+                                          : [...(prevGroup.admins || []), member];
+
+                                        return { ...prevGroup, admins: updatedAdmins };
+                                      });
+
+                                      // Backend request
+                                      const res = await fetch(
+                                        `http://localhost:5000/api/groups/${selectedChat._id}/toggle-admin`,
+                                        {
+                                          method: "PATCH",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                            Authorization: `Bearer ${user.token}`,
+                                          },
+                                          body: JSON.stringify({ memberId: member._id }),
+                                        }
+                                      );
+
+                                      if (!res.ok) throw new Error("Failed to update admin status.");
+                                      const updatedGroup: Group = await res.json();
+
+                                      setSelectedChat(updatedGroup);
+                                      onGroupUpdated?.(updatedGroup);
+                                    } catch (err) {
+                                      console.error(err);
+                                    } finally {
+                                      setOpenDropdown(null);
+                                    }
+                                  }}
+                                  style={{
+                                    padding: "8px 12px",
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #eee",
+
+                                  }}
+                                >
+                                  {isAdmin ? "Remove Admin" : "Assign Admin"}
+                                </div>
+                              )}
 
                             {/* Remove Member */}
                             {currentUserIsCreator && member._id !== user._id && (
@@ -740,7 +796,7 @@ export default function RightPanel(
                                     setOpenDropdown(null);
                                   }
                                 }}
-                                className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                                style={{ padding: "8px 12px", cursor: "pointer" }}
                               >
                                 Remove
                               </div>
@@ -757,7 +813,15 @@ export default function RightPanel(
               {(isCreator || isAdmin) && (
                 <button
                   onClick={() => setShowAddMemberModal(true)}
-                  className="bg-blue-500 text-white py-2 px-3 rounded-md w-full mt-4 cursor-pointer hover:bg-blue-600 transition-colors"
+                  style={{
+                    background: "#0b93f6",
+                    color: "white",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    marginTop: "15px",
+                    width: "100%",
+                  }}
                 >
                   Add Members
                 </button>
@@ -773,13 +837,24 @@ export default function RightPanel(
                       headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
                     });
                     if (!res.ok) throw new Error("Failed to leave group");
+                    const updatedGroup = { ...selectedChat, left: true };
+                    socket?.emit("group_updated", updatedGroup);
                     setSelectedChat(null);
                   } catch (err) {
                     console.error(err);
                     alert("Failed to leave group. Try again.");
                   }
                 }}
-                className="mt-2 w-full py-2 px-3 bg-red-500 text-white rounded-lg border-none cursor-pointer hover:bg-red-600 transition-colors"
+                style={{
+                  marginTop: "10px",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  background: "#ff4d4d",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
               >
                 Leave Group
               </button>
@@ -787,9 +862,27 @@ export default function RightPanel(
           </div>
         )}
         {showAddMemberModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-            <div className="bg-white p-5 rounded-lg w-[350px] max-h-[80vh] overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-4">
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}>
+            <div style={{
+              background: "#fff",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "350px",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}>
+              <h3 >
                 Add Members to {selectedChat.name}
               </h3>
 
@@ -801,12 +894,28 @@ export default function RightPanel(
                   .map((f) => (
                     <div
                       key={f._id}
-                      className="flex justify-between items-center my-2"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        margin: "8px 0",
+                      }}
                     >
                       <span>{f.name}</span>
 
                       <button
-                        className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          background: "#0b93f6",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                        }}
                         onClick={async () => {
                           if (!selectedChat) return;
 
@@ -880,7 +989,13 @@ export default function RightPanel(
               )}
 
               <button
-                className="mt-2 bg-gray-300 py-1 px-3 rounded hover:bg-gray-400 transition-colors"
+                style={{
+                  marginTop: "10px",
+                  background: "#ccc",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                }}
                 onClick={() => setShowAddMemberModal(false)}
               >
                 Close
@@ -893,7 +1008,14 @@ export default function RightPanel(
 
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-2 flex flex-col mb-16">
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "10px",
+        display: "flex",
+        flexDirection: "column",
+        marginBottom: "60px",
+      }}>
         {messages.map((msg, i) => {
           const isSender = msg.sender === user._id;
           const isImage = msg.content?.match(/\.(jpeg|jpg|png|gif)$/i);
@@ -903,14 +1025,20 @@ export default function RightPanel(
           return (
             <div
               key={`${msg._id}-${i}`}
-              className={`
-          max-w-[70%] break-words mb-2 p-2 rounded-2xl
-          ${isSender ? "self-end bg-blue-500 text-white" : "self-start bg-gray-200 text-black"}
-        `}
+              style={{
+                alignSelf: isSender ? "flex-end" : "flex-start",
+                background: isSender ? "#0b93f6" : "#e5e5ea",
+                color: isSender ? "#fff" : "#000",
+                padding: "8px 12px",
+                borderRadius: "20px",
+                marginBottom: "8px",
+                maxWidth: "70%",
+                wordBreak: "break-word",
+              }}
             >
               {/* Sender Name */}
               {!isSender && msg.senderName && (
-                <strong className="block mb-1">{msg.senderName}:</strong>
+                <strong style={{ display: "block", marginBottom: "4px" }}>{msg.senderName}:</strong>
               )}
 
               {/* Message Content */}
@@ -924,27 +1052,41 @@ export default function RightPanel(
                   <Image
                     src={msg.content}
                     alt="sent"
-                    className="max-w-xs rounded-xl shadow-md transition-transform duration-200 hover:scale-105 hover:shadow-lg cursor-pointer max-h-64 w-auto object-cover"
+                    width={320}          // max-w-xs = 20rem = 320px
+                    height={256}         // max-h-64 = 16rem = 256px
+                    style={{
+                      borderRadius: "0.75rem",  // rounded-xl
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)", // shadow-md
+                      cursor: "pointer",        // cursor-pointer
+                      objectFit: "cover",       // object-cover
+                      transform: hover ? "scale(1.05)" : "scale(1)",
+                      transition: "transform 0.2s, box-shadow 0.2s", // transition + duration
+                    }}
+                    onMouseEnter={() => setHover(true)}
+                    onMouseLeave={() => setHover(false)}
                   />
                 </a>
               ) : isVideo ? (
                 <video
                   src={msg.content}
                   controls
-                  className="max-w-xs rounded-xl"
+                  style={{ maxWidth: "200px", borderRadius: "10px" }}
                 />
               ) : isAudio ? (
                 <audio
                   src={msg.content}
                   controls
-                  className="w-full mt-1"
+                  style={{ width: "100%", marginTop: "5px" }}
                 />
               ) : msg.type === "file" && msg.fileUrl ? (
                 <a
                   href={msg.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`underline ${isSender ? "text-white" : "text-blue-600"}`}
+                  style={{
+                    color: isSender ? "#fff" : "#007bff",
+                    textDecoration: "underline",
+                  }}
                 >
                   {msg.fileName || "Download File"}
                 </a>
@@ -954,8 +1096,12 @@ export default function RightPanel(
 
               {/* Timestamp */}
               <div
-                className={`text-[0.7rem] mt-1 text-right ${isSender ? "text-white/80" : "text-gray-600"
-                  }`}
+                style={{
+                  fontSize: "0.7rem",
+                  color: isSender ? "rgba(255,255,255,0.8)" : "#555",
+                  textAlign: "right",
+                  marginTop: "4px",
+                }}
               >
                 {formatTimestamp(msg.createdAt)}
               </div>
@@ -965,24 +1111,44 @@ export default function RightPanel(
         <div ref={messagesEndRef} />
       </div>
       {/* Input Area */}
-      <div className="relative flex items-center mt-2">
+      <div style={{ position: "relative", display: "flex", marginTop: "10px", alignItems: "center" }}>
 
         {/* 📎 Attach button */}
         <button
           onClick={() => setShowTypeMenu((prev) => !prev)}
-          className="flex-none mr-2 bg-transparent border-none cursor-pointer relative"
-        >
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            marginRight: "10px",
+            position: "relative",
+            flex: 0,
+          }}>
           <Paperclip size={22} color="#0b93f6" />
         </button>
 
         {/* 📋 Type selection popup */}
         {showTypeMenu && (
-          <div className="absolute bottom-12 left-2 bg-white border border-gray-200 rounded-lg shadow-md z-10">
+          <div style={{
+            position: "absolute",
+            bottom: "45px",
+            left: "10px",
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            zIndex: 10,
+          }}>
             {["image", "video", "audio", "file"].map((type) => (
               <div
                 key={type}
                 onClick={() => handleFileTypeSelect(type as "file" | "image" | "video" | "audio")}
-                className="px-3 py-2 cursor-pointer border-b last:border-b-0 text-gray-800 hover:bg-gray-100"
+                style={{
+                  padding: "8px 12px",
+                  cursor: "pointer",
+                  borderBottom: type !== "file" ? "1px solid #eee" : "none",
+                  color: "#333",
+                }}
               >
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </div>
@@ -994,7 +1160,7 @@ export default function RightPanel(
         <input
           type="file"
           id="fileInput"
-          className="hidden"
+          style={{ display: "none" }}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0];
             if (file) setSelectedFile(file);
@@ -1003,7 +1169,7 @@ export default function RightPanel(
 
         {/* 🧾 File status indicator */}
         {selectedFile && (
-          <span className="mr-2 text-gray-600 text-sm">
+          <span style={{ marginRight: "10px", fontSize: "0.9rem", color: "#666" }}>
             📁 {selectedFile.name.length > 20 ? selectedFile.name.slice(0, 20) + "..." : selectedFile.name}
           </span>
         )}
@@ -1015,14 +1181,28 @@ export default function RightPanel(
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && handleSend()}
-          className="flex-1 px-4 py-2 rounded-full border border-gray-300 outline-none focus:ring-2 focus:ring-blue-400"
+          style={{
+            flex: 1,
+            padding: "10px",
+            borderRadius: "20px",
+            border: "1px solid #ccc",
+            outline: "none",
+          }}
         />
 
         {/* 🚀 Send button */}
         <button
           onClick={handleSend}
-          className="flex-none ml-2 px-4 py-2 rounded-full bg-blue-500 text-white border-none cursor-pointer hover:bg-blue-600 transition-colors"
-        >
+          style={{
+            marginLeft: "10px",
+            padding: "10px 20px",
+            borderRadius: "20px",
+            background: "#0b93f6",
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            flex: 0,
+          }}>
           Send
         </button>
       </div>
@@ -1031,9 +1211,13 @@ export default function RightPanel(
       {selectedFile && (
         <span
           style={{
-            marginRight: "10px",
+            display: "flex",
+            alignItems: "center",
+            marginTop: "8px",
+            background: "#e5e5ea",
+            padding: "6px 10px",
+            borderRadius: "12px",
             fontSize: "0.9rem",
-            color: "#666",
           }}
         >
           📁{" "}
@@ -1047,7 +1231,7 @@ export default function RightPanel(
       {sendingFile && (
         <div
           style={{
-            position: "absolute" as const,
+            position: "absolute",
             bottom: "70px",
             right: "20px",
             padding: "8px 14px",
@@ -1059,7 +1243,7 @@ export default function RightPanel(
             boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
             gap: "8px",
             fontSize: "0.9rem",
-            animation: "fadeInOut 0.3s ease",
+            animation: "fadeInOut 0.3s ease"
           }}
         >
           <span>
@@ -1069,9 +1253,19 @@ export default function RightPanel(
       )}
 
       {selectedMemberProfile && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-                  bg-white rounded-xl shadow-lg p-5 w-72 text-center z-50">
-
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "#fff",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          padding: "20px",
+          width: "300px",
+          textAlign: "center",
+          zIndex: 200,
+        }}>
           {/* Profile Picture */}
           <Image
             src={
@@ -1080,19 +1274,33 @@ export default function RightPanel(
                 : "/847969.png"
             }
             alt="profile"
-            className="w-24 h-24 rounded-full object-cover mx-auto mb-2"
+            width={100}
+            height={100}
+            style={{
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginBottom: "10px",
+            }}
           />
 
           {/* Name */}
-          <h2 className="text-lg font-semibold">{selectedMemberProfile.name}</h2>
+          <h2 >{selectedMemberProfile.name}</h2>
 
           {/* Email */}
-          <p className="text-gray-600">{selectedMemberProfile.email}</p>
+          <p style={{ color: "#555" }}>{selectedMemberProfile.email}</p>
 
           {/* Close Button */}
           <button
             onClick={() => setSelectedMemberProfile(null)}
-            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            style={{
+              marginTop: "10px",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              background: "#0b93f6",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Close
           </button>
@@ -1101,55 +1309,74 @@ export default function RightPanel(
 
       {showEditGroupModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
           onClick={() => setShowEditGroupModal(false)}
         >
           <div
-            className="bg-white p-5 rounded-lg w-80 max-h-[80%] overflow-y-auto"
+            style={{
+              background: "#fff",
+              padding: "20px",
+              borderRadius: "10px",
+              width: "350px",
+              maxHeight: "80%",
+              overflowY: "auto",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4">Edit Group</h3>
+            <h3 >Edit Group</h3>
 
             {/* Group Name */}
-            <div className="mb-4">
-              <label className="block font-medium">Group Name:</label>
+            <div style={{ margin: "10px 0" }}>
+              <label >Group Name:</label>
               <input
                 type="text"
                 value={editGroupName}
                 onChange={(e) => setEditGroupName(e.target.value)}
-                className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                style={{ width: "100%", padding: "6px", marginTop: "4px", borderRadius: "6px", border: "1px solid #ccc" }}
               />
             </div>
 
             {/* Group Profile Picture */}
-            <div className="mb-4">
-              <label className="block font-medium">Group Profile Picture:</label>
+            <div style={{ margin: "10px 0" }}>
+              <label >Group Profile Picture:</label>
               <input
                 type="file"
                 onChange={handleGroupPicChange}
-                className="mt-1"
+                style={{ marginTop: "4px" }}
               />
               {editPreviewPic && (
                 <Image
                   src={editPreviewPic}
                   alt="preview"
-                  className="w-20 h-20 rounded-full mt-2 object-cover"
-                />
+                  width={80}
+                  height={80}
+                  style={{ borderRadius: "50%", marginTop: "6px" }} />
               )}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-4">
+            <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
               <button
                 onClick={handleSaveGroup}
                 disabled={savingGroup}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50"
+                style={{ flex: 1, padding: "8px", borderRadius: "6px", background: "#0b93f6", color: "#fff", border: "none" }}
               >
                 {savingGroup ? "Saving..." : "Save"}
               </button>
               <button
                 onClick={() => setShowEditGroupModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition-colors"
+                style={{ flex: 1, padding: "8px", borderRadius: "6px", background: "#ccc", border: "none" }}
               >
                 Cancel
               </button>
@@ -1161,37 +1388,54 @@ export default function RightPanel(
       {/* 🧑 View Profile Modal */}
       {showProfile && (
         <div
-          className="fixed inset-0 flex justify-center items-center z-50"
-          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-          onClick={() => setShowProfile(false)}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "#fff",
+            borderRadius: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            padding: "20px",
+            width: "300px",
+            textAlign: "center",
+            zIndex: 9999,
+          }}
         >
-          <div
-            className="bg-white rounded-xl shadow-lg p-5 w-72 text-center"
-            onClick={(e) => e.stopPropagation()}
+          <Image
+            src={
+              selectedChat?.isGroupChat
+                ? `${selectedChat.profilePic || "/847969.png"}?t=${selectedChat.updatedAt || Date.now()}`
+                : `${chatUser?.profilePic || "/847969.png"}?t=${chatUser?.updatedAt || Date.now()}`
+            }
+            alt="profile"
+            width={100}
+            height={100}
+            style={{
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginBottom: "10px",
+            }}
+          />
+          <h2 >{chatUser?.name || "Friend"}</h2>
+          <p style={{ color: "#555" }}>{chatUser?.email || "No email available"}</p>
+          <button
+            onClick={() => setShowProfile(false)}
+            style={{
+              marginTop: "10px",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              background: "#0b93f6",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
-            <Image
-              src={
-                selectedChat?.isGroupChat
-                  ? `${selectedChat.profilePic || "/847969.png"}?t=${selectedChat.updatedAt || Date.now()}`
-                  : `${chatUser?.profilePic || "/847969.png"}?t=${chatUser?.updatedAt || Date.now()}`
-              }
-              alt="profile"
-              className="w-24 h-24 rounded-full object-cover mx-auto mb-3"
-            />
-            <h2 className="text-lg font-semibold">{chatUser?.name || "Friend"}</h2>
-            <p className="text-gray-600">{chatUser?.email || "No email available"}</p>
-            <button
-              onClick={() => setShowProfile(false)}
-              className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Close
-            </button>
-          </div>
+            Close
+          </button>
+
         </div>
       )}
-
-
-
     </div>
   );
 }

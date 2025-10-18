@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, User } from "@/context/AuthContext";
+import '../login/login.css';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -70,51 +71,51 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-10 rounded-xl shadow-md w-full max-w-md font-sans">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Register</h2>
+     <div className="login-container">
+      
+        <h2 >Register</h2>
 
-        <div className="mb-5 flex flex-col">
-          <label className="mb-1 font-semibold text-gray-600">Name</label>
+          <div className="input-group">
+           <label>Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={loading}
-            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:border-blue-500 focus:shadow-md"
+          
           />
         </div>
 
-        <div className="mb-5 flex flex-col">
-          <label className="mb-1 font-semibold text-gray-600">Email</label>
+          <div className="input-group">
+         <label>Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
-            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:border-blue-500 focus:shadow-md"
+          
           />
         </div>
 
-        <div className="mb-5 flex flex-col">
-          <label className="mb-1 font-semibold text-gray-600">Password</label>
+         <div className="input-group">
+           <label>Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
-            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:border-blue-500 focus:shadow-md"
+           
           />
         </div>
 
         <button
           onClick={handleRegister}
           disabled={loading}
-          className="w-full bg-blue-500 text-white py-3 font-semibold rounded-md hover:bg-blue-600"
+          
         >
           {loading ? "Registering..." : "Register"}
         </button>
-      </div>
+      
     </div>
   );
 }

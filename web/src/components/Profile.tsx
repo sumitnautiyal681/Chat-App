@@ -148,7 +148,39 @@ export default function Profile() {
 
   return (
     <div className="profile-container">
-      <h3>Your Profile</h3>
+      <div style={{
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "10px 16px",
+  width: "100%",
+  background: "#fff",
+  boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+  position: "sticky",
+  top: 0,
+  zIndex: 10,
+}}>
+  {/* Header Title */}
+  <h3 style={{ fontSize: "25px", margin: 0 }}>Your Profile</h3>
+
+  {/* Hamburger Icon (mobile only) */}
+  <button
+    className="hamburger-btn"
+    style={{
+      border: "none",
+      background: "none",
+      cursor: "pointer",
+      fontSize: "24px",
+      display: "none", // will show on mobile via CSS
+      color:"black"
+    }}
+    onClick={() => {
+      document.querySelector(".left-panel")?.classList.toggle("show");
+    }}
+  >
+    ☰
+  </button>
+</div>
 
       {isEditing ? (
         <>
@@ -212,7 +244,7 @@ export default function Profile() {
             <strong>Profile Picture:</strong>
             <br />
             {user.profilePic && (
-              <Image src={user.profilePic} alt="Profile" width="100" />
+              <Image src={user.profilePic} alt="Profile" width="100" height="100"/>
             )}
           </p>
           <button onClick={() => setIsEditing(true)}>Edit Profile</button>

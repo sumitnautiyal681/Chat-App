@@ -3,7 +3,7 @@ html, body, #root {
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: skyblue; /* 👈 main outer background */
+  background-color: skyblue;/* 👈 main outer background */
   display: flex;
   justify-content: center;
   align-items: center;

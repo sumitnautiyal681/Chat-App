@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Camera } from "lucide-react";
 import Image from "next/image";
-import {Group } from "../types/chat";
+import { Group } from "../types/chat";
 interface User {
   _id: string;
   name: string;
+  email?: string;
   profilePic?: string;
 }
 
@@ -130,47 +131,129 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
   );
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-md max-w-md mx-auto">
-      <h3 className="text-center text-xl font-semibold mb-4">Create Group</h3>
+    <div style={{
+      background: "#fff",
+      borderRadius: 12,
+      padding: 20,
+      boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+      maxWidth: 400,
+    }}>
+   <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "10px 16px",
+    width: "100%", // full width of middle panel
+    background: "#fff",
+    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
+  }}
+>
+  {/* Header Title */}
+  <h3 style={{ fontSize: "25px", margin: 0 }}>Create Group</h3>
+
+  {/* Hamburger Icon (mobile only) */}
+  <button
+    className="hamburger-btn"
+    style={{
+      border: "none",
+      background: "none",
+      cursor: "pointer",
+      fontSize: "24px",
+      display: "none", // will show on mobile via CSS
+      color:"black"
+    }}
+    onClick={() => {
+      document.querySelector(".left-panel")?.classList.toggle("show");
+    }}
+  >
+    ☰
+  </button>
+</div>
+
+
+
+
 
       {/* Group Image */}
-      <div className="flex justify-center mb-5 relative">
-        <div className="relative">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginBottom: 20,
+          position: "relative",
+        }}
+      >
+        <div style={{ position: "relative" }}>
           <Image
             src={previewUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
             alt="Group"
-            className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
+            width={120}           // explicitly required
+            height={120}          // explicitly required
+            style={{
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "2px solid #ddd",
+            }}
           />
           <label
             htmlFor="groupImage"
-            className="absolute bottom-0 right-0 bg-blue-500 w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer shadow-md"
-          >
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              backgroundColor: "#007bff",
+              borderRadius: "50%",
+              width: 35,
+              height: 35,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              color: "#fff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            }}>
             <Camera size={18} />
           </label>
           <input
             type="file"
             id="groupImage"
             accept="image/*"
-            className="hidden"
+            style={{ display: "none" }}
             onChange={handleImageChange}
           />
         </div>
       </div>
 
       {/* Group Name */}
-      <input
-        type="text"
-        value={groupName}
-        onChange={(e) => setGroupName(e.target.value)}
-        placeholder="Enter group name"
-        className="w-full p-2 mb-4 border rounded outline-none"
-      />
-
+      <div style={{ marginBottom: 15 }}>
+        <input
+          type="text"
+          value={groupName}
+          onChange={(e) => setGroupName(e.target.value)}
+          placeholder="Enter group name"
+          style={{
+            width: "87%",
+            padding: "10px 12px",
+            borderRadius: 8,
+            border: "1px solid #ccc",
+            outline: "none",
+          }} />
+      </div>
       {/* Member Selection */}
-      <div className="relative mb-4">
+      <div style={{ marginBottom: 15, position: "relative" }}>
         <div
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="border rounded p-2 cursor-pointer bg-gray-50"
+          style={{
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            padding: "10px 12px",
+            cursor: "pointer",
+            backgroundColor: "#fafafa",
+          }}
         >
           {selectedUsers.length > 0
             ? `${selectedUsers.length} member(s) selected`
@@ -178,27 +261,58 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
         </div>
 
         {dropdownOpen && (
-          <div className="absolute top-full left-0 w-full bg-white border rounded max-h-52 overflow-y-auto p-2 z-10">
+          <div style={{
+            position: "absolute",
+            top: "105%",
+            left: 0,
+            width: "100%",
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            maxHeight: 200,
+            overflowY: "auto",
+            zIndex: 10,
+            padding: 10,
+          }}>
             <input
               type="text"
               placeholder="Search friends..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 mb-2 border rounded"
+              style={{
+                width: "100%",
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid #ccc",
+                marginBottom: 8,
+              }}
             />
 
-            {filteredUsers.map((u) => (
+            {filteredUsers.map((u: User) => (
               <div
                 key={u._id}
-                className={`flex items-center p-2 cursor-pointer rounded ${
-                  selectedUsers.includes(u._id) ? "bg-blue-100" : ""
-                }`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "6px 8px",
+                  cursor: "pointer",
+                  backgroundColor: selectedUsers.includes(u._id)
+                    ? "#e0f0ff"
+                    : "transparent",
+                  borderRadius: 6,
+                }}
                 onClick={() => toggleSelectUser(u._id)}
               >
                 <Image
                   src={u.profilePic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
                   alt={u.name}
-                  className="w-9 h-9 rounded-full object-cover mr-2"
+                  style={{
+                    width: 35,
+                    height: 35,
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    marginRight: 10,
+                  }}
                 />
                 <span>{u.name}</span>
               </div>
@@ -210,7 +324,16 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
       <button
         onClick={handleCreateGroup}
         disabled={creating}
-        className="w-full bg-blue-500 text-white py-2 rounded font-bold hover:bg-blue-600 disabled:opacity-50"
+        style={{
+          width: "100%",
+          padding: "10px 0",
+          border: "none",
+          backgroundColor: "#007bff",
+          color: "#fff",
+          borderRadius: 8,
+          cursor: "pointer",
+          fontWeight: "bold",
+        }}
       >
         {creating ? "Creating..." : "Create Group"}
       </button>

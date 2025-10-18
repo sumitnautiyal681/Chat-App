@@ -23,11 +23,12 @@ export interface Chat {
 export interface Group {
   _id: string;
   name: string;
-  isGroupChat: true;
+  isGroupChat: boolean;
   members: BaseUser[];     // main group members
   users?: BaseUser[];      // optional, could duplicate members
   admin: BaseUser;         // group creator/admin
   admins?: BaseUser[];     // other admins
   profilePic?: string;
   updatedAt?: string;
+   left?: boolean; 
 }
