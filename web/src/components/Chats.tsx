@@ -104,70 +104,105 @@ export default function Chats({
 
   // --- Attach chatIds to friends ---
   useEffect(() => {
-    if (!user) return;
+  if (!user || friends.length === 0) return;
 
-    const attachChatIds = async () => {
-      if (friends.length === 0 || friends.every((f) => f.chatId)) return;
+  const attachChatIds = async () => {
+    // Only process friends who don’t have chatIds yet
+    const friendsWithoutChat = friends.filter(f => !f.chatId);
+    if (friendsWithoutChat.length === 0) return;
 
+    try {
       const updatedFriends = await Promise.all(
         friends.map(async (friend) => {
           if (friend.chatId) return friend;
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/one-to-one`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${user.token}`,
-            },
-            body: JSON.stringify({ userId1: user._id, userId2: friend._id }),
-          });
+          try {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/chats/one-to-one`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${user.token}`,
+                },
+                body: JSON.stringify({ userId1: user._id, userId2: friend._id }),
+              }
+            );
 
-          const chat = (await res.json()) as Chat;
-          return { ...friend, chatId: chat._id };
+            if (!res.ok) throw new Error("Failed to get chatId");
+            const chat = await res.json();
+            return { ...friend, chatId: chat._id };
+          } catch (err) {
+            console.error("Error attaching chatId:", err);
+            return friend;
+          }
         })
       );
 
-      setFriends(updatedFriends);
-    };
+      // ✅ Only update if something changed (prevents infinite loop)
+      const hasChanges = updatedFriends.some(
+        (f, i) => f.chatId !== friends[i]?.chatId
+      );
+      if (hasChanges) setFriends(updatedFriends);
 
-    attachChatIds();
-  }, [friends, user]);
+    } catch (err) {
+      console.error("Error in attachChatIds:", err);
+    }
+  };
+
+  attachChatIds();
+}, [user, friends]);
 
   // --- Fetch latest messages ---
   useEffect(() => {
+  if (!user) return;
 
-    const fetchLatestMessages = async () => {
-      try {
-        const chatIds = [
-          ...friends.map((f) => f.chatId || f._id),
-          ...groups.map((g) => g._id),
-        ];
+  const fetchLatestMessages = async () => {
+    try {
+      // ✅ Friends that have valid chatIds
+      const validFriendChatIds = friends
+        .filter((f) => f.chatId)
+        .map((f) => f.chatId!);
 
-        const newLatestMessages: Record<string, Message> = {};
+      // ✅ Groups always valid
+      const groupIds = groups.map((g) => g._id);
 
-        await Promise.all(
-          chatIds.map(async (id) => {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/${id}`, {
-              headers: { Authorization: `Bearer ${user?.token}` },
-            });
+      const chatIds = [...validFriendChatIds, ...groupIds];
+      if (chatIds.length === 0) return;
 
+      console.log("Fetching latest messages for:", chatIds);
+
+      const newLatestMessages: Record<string, Message> = {};
+
+      await Promise.all(
+        chatIds.map(async (id) => {
+          try {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/messages/${id}`,
+              {
+                headers: { Authorization: `Bearer ${user.token}` },
+              }
+            );
             if (res.ok) {
               const msgs = await res.json();
               if (msgs.length > 0) {
                 newLatestMessages[id] = msgs[msgs.length - 1];
               }
             }
-          })
-        );
+          } catch (err) {
+            console.warn("Failed to fetch messages for", id, err);
+          }
+        })
+      );
 
-        setLatestMessages(newLatestMessages);
-      } catch (err) {
-        console.error("Error fetching latest messages:", err);
-      }
-    };
+      setLatestMessages(newLatestMessages);
+    } catch (err) {
+      console.error("Error fetching latest messages:", err);
+    }
+  };
 
-    fetchLatestMessages();
-  }, [friends, groups, user]);
+  fetchLatestMessages();
+}, [friends, groups, user]);
 
   // --- Handle new group creation ---
   useEffect(() => {
@@ -519,8 +554,9 @@ export default function Chats({
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {displayedList.length > 0 ? (
             displayedList.map((item) => {
-              const lastMsg =
-                latestMessages[item.type === "friend" ? item.chatId! : item._id];
+              const chatKey = item.type === "friend" ? item.chatId || item._id : item._id;
+const lastMsg = latestMessages[chatKey];
+
               const isFromYou = lastMsg?.sender === user?._id;
               const senderLabel = isFromYou ? "You" : lastMsg?.senderName;
 
@@ -542,7 +578,7 @@ export default function Chats({
                 >
                   <div style={{ position: "relative" }}>
                     <Image
-                      src={item.profilePic || "/globe.svg"}
+                      src={item.profilePic || "/group-dp.png"}
                       alt={item.name}
                       width={40}
                       height={40}

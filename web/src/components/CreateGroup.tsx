@@ -189,7 +189,7 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
       >
         <div style={{ position: "relative" }}>
           <Image
-            src={previewUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+            src={previewUrl || "/group-dp.png"}
             alt="Group"
             width={120}           // explicitly required
             height={120}          // explicitly required
@@ -304,11 +304,11 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
                 onClick={() => toggleSelectUser(u._id)}
               >
                 <Image
-                  src={u.profilePic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                  src={u.profilePic || "/group-dp.png"}
                   alt={u.name}
+                  width={35}
+                  height={35}
                   style={{
-                    width: 35,
-                    height: 35,
                     borderRadius: "50%",
                     objectFit: "cover",
                     marginRight: 10,

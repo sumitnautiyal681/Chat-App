@@ -395,7 +395,7 @@ export default function RightPanel(
       style={{
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-start", // <-- put everything together
+    justifyContent: "space-between", // <-- put everything together
     padding: "10px 15px",
     background: "#ffffff",
     borderBottom: "1px solid #ddd",
@@ -417,7 +417,6 @@ export default function RightPanel(
             border: "none",
             cursor: "pointer",
             marginRight: "10px",
-            display: "flex", // show only on mobile via CSS
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -430,7 +429,7 @@ export default function RightPanel(
             key={selectedChat?.profilePic}
             src={
               selectedChat?.isGroupChat
-                ? selectedChat.profilePic || "/847969.png"
+                ? selectedChat.profilePic || "/group-dp.png"
                 : chatUser?.profilePic || "/847969.png"
             }
             alt="profile"
