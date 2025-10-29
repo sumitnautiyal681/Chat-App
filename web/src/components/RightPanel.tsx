@@ -101,7 +101,6 @@ export default function RightPanel(
       if (!res.ok) throw new Error("Failed to fetch group details");
 
       const data: Group = await res.json();
-      console.log("Fetched full group info ✅", data);
 
       setGroupInfo(data);
       setSelectedChat((prev) =>

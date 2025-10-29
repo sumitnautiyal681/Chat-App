@@ -170,8 +170,6 @@ export default function Chats({
       const chatIds = [...validFriendChatIds, ...groupIds];
       if (chatIds.length === 0) return;
 
-      console.log("Fetching latest messages for:", chatIds);
-
       const newLatestMessages: Record<string, Message> = {};
 
       await Promise.all(
@@ -225,7 +223,6 @@ export default function Chats({
     if (!socket) return;
 
     const handleGroupUpdated = (updatedGroup: Group) => {
-      console.log("🔁 group_updated received:", updatedGroup);
 
       // Update groups list
       setGroups((prev) =>
@@ -263,7 +260,6 @@ export default function Chats({
 
     const handleReceiveMessage = async (message: Message) => {
       try {
-        console.log("socket receive_message:", message);
         const chatId = message.chatId;
         const time = message.createdAt || message.timestamp || new Date().toISOString();
 
